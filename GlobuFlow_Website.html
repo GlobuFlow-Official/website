@@ -1,0 +1,1356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GlobuFlow — Flow Without Friction</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #000000;
+  --surface: #080808;
+  --surface2: #0f0f0f;
+  --surface3: #141414;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --border3: rgba(255,255,255,0.2);
+  --text: #ffffff;
+  --text2: #888888;
+  --text3: #444444;
+  --text4: #222222;
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.08);
+  --blue-glow: rgba(59,130,246,0.15);
+  --cyan: #06b6d4;
+  --cyan-dim: rgba(6,182,212,0.08);
+  --accent: rgba(255,255,255,0.9);
+  --font-display: 'Playfair Display', serif;
+  --font-body: 'Space Grotesk', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  cursor: none;
+}
+
+/* Custom cursor */
+.cursor {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.1s ease;
+  mix-blend-mode: difference;
+}
+.cursor-ring {
+  position: fixed;
+  width: 32px;
+  height: 32px;
+  border: 0.5px solid rgba(255,255,255,0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transition: transform 0.15s ease, width 0.2s, height 0.2s;
+}
+
+/* Noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.4;
+}
+
+/* NAV */
+nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 1.25rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 0.5px solid transparent;
+  transition: border-color 0.3s, background 0.3s;
+}
+nav.scrolled {
+  background: rgba(0,0,0,0.9);
+  border-color: var(--border);
+  backdrop-filter: blur(12px);
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.nav-brand {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.3px;
+}
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2.5rem;
+  list-style: none;
+}
+.nav-links a {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+  text-decoration: none;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: white; }
+.nav-cta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: black;
+  background: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 20px;
+  cursor: none;
+  transition: opacity 0.2s;
+}
+.nav-cta:hover { opacity: 0.85; }
+
+/* HERO */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 8rem 2rem 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 60px 60px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 100%);
+}
+
+.hero-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(59,130,246,0.06) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hero-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--text3);
+  text-transform: uppercase;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.hero-tag::before, .hero-tag::after {
+  content: '';
+  width: 40px;
+  height: 0.5px;
+  background: var(--border2);
+}
+
+.hero-title {
+  font-family: var(--font-display);
+  font-size: clamp(52px, 8vw, 96px);
+  font-weight: 400;
+  line-height: 1.0;
+  letter-spacing: -2px;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+.hero-title em {
+  font-style: italic;
+  color: var(--text2);
+}
+
+.hero-sub {
+  font-family: var(--font-body);
+  font-size: 16px;
+  color: var(--text2);
+  max-width: 480px;
+  line-height: 1.7;
+  margin: 0 auto 3rem;
+}
+
+.hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 4rem;
+}
+
+.btn-primary {
+  background: white;
+  color: black;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 28px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: none;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text2);
+  border: 0.5px solid var(--border2);
+  border-radius: 6px;
+  padding: 12px 28px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  cursor: none;
+  transition: border-color 0.2s, color 0.2s;
+}
+.btn-secondary:hover { border-color: var(--border3); color: white; }
+
+.hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 3rem;
+  justify-content: center;
+}
+.hero-stat { text-align: center; }
+.hero-stat-num {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -1px;
+  display: block;
+}
+.hero-stat-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.hero-stat-div {
+  width: 0.5px;
+  height: 40px;
+  background: var(--border);
+}
+
+/* SECTION COMMON */
+section {
+  padding: 7rem 3rem;
+  position: relative;
+}
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--text3);
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.section-label::before {
+  content: '';
+  width: 24px;
+  height: 0.5px;
+  background: var(--border2);
+}
+.section-title {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 52px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  margin-bottom: 1.5rem;
+}
+.section-title em { font-style: italic; color: var(--text2); }
+.section-sub {
+  font-size: 15px;
+  color: var(--text2);
+  line-height: 1.7;
+  max-width: 520px;
+}
+
+/* PROBLEM */
+.problem {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6rem;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.problem-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.problem-card {
+  background: var(--surface);
+  border: 0.5px solid var(--border);
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  transition: border-color 0.2s;
+}
+.problem-card:hover { border-color: var(--border2); }
+.problem-card-num {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 2px;
+}
+.problem-card-text { font-size: 14px; color: var(--text2); line-height: 1.5; }
+.problem-card-text strong { color: white; font-weight: 500; }
+
+/* SOLUTION */
+.solution-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 4rem;
+  max-width: 1000px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.solution-card {
+  background: var(--surface);
+  padding: 2.5rem 2rem;
+  position: relative;
+  transition: background 0.2s;
+}
+.solution-card:hover { background: var(--surface2); }
+.sol-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 0.5px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  font-size: 14px;
+}
+.sol-num {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 3px;
+  margin-bottom: 0.75rem;
+}
+.sol-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.3px;
+}
+.sol-desc { font-size: 13px; color: var(--text2); line-height: 1.7; }
+
+/* HOW IT WORKS */
+.how-wrap { max-width: 900px; margin: 0 auto; }
+.how-steps { margin-top: 4rem; display: flex; flex-direction: column; gap: 0; }
+.how-step {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 2rem;
+  padding: 2rem 0;
+  border-bottom: 0.5px solid var(--border);
+  position: relative;
+}
+.how-step:last-child { border-bottom: none; }
+.step-num {
+  font-family: var(--font-display);
+  font-size: 48px;
+  color: var(--text4);
+  font-weight: 700;
+  letter-spacing: -2px;
+  line-height: 1;
+  padding-top: 4px;
+}
+.step-content {}
+.step-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+.step-title { font-size: 20px; font-weight: 600; margin-bottom: 0.75rem; letter-spacing: -0.3px; }
+.step-desc { font-size: 14px; color: var(--text2); line-height: 1.7; }
+
+/* WAITLIST MID */
+.waitlist-mid {
+  background: var(--surface);
+  border-top: 0.5px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
+  padding: 5rem 3rem;
+  text-align: center;
+}
+.waitlist-mid-title {
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 400;
+  letter-spacing: -1px;
+  margin-bottom: 1rem;
+}
+.waitlist-mid-sub {
+  font-size: 14px;
+  color: var(--text2);
+  margin-bottom: 2.5rem;
+}
+.waitlist-form {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  max-width: 480px;
+  margin: 0 auto;
+}
+.waitlist-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 0.5px solid var(--border2);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: white;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.waitlist-input::placeholder { color: var(--text3); }
+.waitlist-input:focus { border-color: var(--border3); }
+.waitlist-btn {
+  background: white;
+  color: black;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: none;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+}
+.waitlist-btn:hover { opacity: 0.9; }
+.waitlist-note {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 2px;
+  margin-top: 1rem;
+}
+
+/* TEAM */
+.team-wrap { max-width: 1100px; margin: 0 auto; }
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 4rem;
+}
+.team-card {
+  background: var(--surface);
+  padding: 1.75rem;
+  transition: background 0.2s;
+}
+.team-card:hover { background: var(--surface2); }
+.team-initials {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--surface2);
+  border: 0.5px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 1rem;
+}
+.team-name { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.team-role { font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+.team-loc {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+
+/* WAITLIST BOTTOM */
+.waitlist-bottom {
+  max-width: 700px;
+  margin: 0 auto;
+  text-align: center;
+  padding: 7rem 3rem;
+}
+.waitlist-bottom .section-title { margin-bottom: 1rem; }
+.waitlist-bottom .section-sub { margin: 0 auto 2.5rem; }
+.waitlist-bottom .waitlist-form { max-width: 500px; }
+
+/* FOOTER */
+footer {
+  border-top: 0.5px solid var(--border);
+  padding: 2.5rem 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+}
+.team-linkedin {
+  display: inline-block;
+  margin-top: 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  text-decoration: none;
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  transition: color 0.2s, border-color 0.2s;
+}
+.team-linkedin:hover { color: var(--text2); border-color: var(--border2); }
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  list-style: none;
+}
+.footer-links a {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  text-decoration: none;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--text2); }
+.footer-copy {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 1px;
+}
+
+/* AI CHATBOT */
+.chat-btn {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 52px;
+  height: 52px;
+  background: white;
+  border-radius: 50%;
+  border: none;
+  cursor: none;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.1), 0 8px 32px rgba(0,0,0,0.8);
+  transition: transform 0.2s;
+}
+.chat-btn:hover { transform: scale(1.08); }
+.chat-btn svg { width: 20px; height: 20px; }
+
+.chat-window {
+  position: fixed;
+  bottom: 5.5rem;
+  right: 2rem;
+  width: 360px;
+  height: 480px;
+  background: var(--surface);
+  border: 0.5px solid var(--border2);
+  border-radius: 16px;
+  z-index: 200;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.8);
+}
+.chat-window.open { display: flex; }
+
+.chat-header {
+  padding: 1rem 1.25rem;
+  border-bottom: 0.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface2);
+  border: 0.5px solid var(--border2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.chat-info {}
+.chat-name { font-size: 13px; font-weight: 600; }
+.chat-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #22c55e;
+  letter-spacing: 1px;
+}
+.chat-close {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--text2);
+  cursor: none;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border2) transparent;
+}
+
+.msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.msg.bot {
+  background: var(--surface2);
+  border: 0.5px solid var(--border);
+  color: var(--text);
+  align-self: flex-start;
+  border-bottom-left-radius: 4px;
+}
+.msg.user {
+  background: white;
+  color: black;
+  align-self: flex-end;
+  border-bottom-right-radius: 4px;
+}
+.msg.typing { color: var(--text2); font-style: italic; }
+
+.chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 1.25rem 0.75rem;
+}
+.suggestion {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--text2);
+  border: 0.5px solid var(--border2);
+  border-radius: 99px;
+  padding: 4px 12px;
+  cursor: none;
+  transition: border-color 0.2s, color 0.2s;
+  background: none;
+}
+.suggestion:hover { border-color: var(--border3); color: white; }
+
+.chat-input-row {
+  padding: 0.75rem 1.25rem;
+  border-top: 0.5px solid var(--border);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.chat-input {
+  flex: 1;
+  background: var(--surface2);
+  border: 0.5px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: white;
+  outline: none;
+}
+.chat-input::placeholder { color: var(--text3); }
+.chat-send {
+  background: white;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: none;
+}
+
+/* Diamond i-dot */
+.i-wrap {
+  position: relative;
+  display: inline-block;
+}
+.i-dot-diamond {
+  position: absolute;
+  top: -0.12em;
+  left: 50%;
+  transform: translateX(-50%) rotate(45deg);
+  width: 0.18em;
+  height: 0.18em;
+  background: white;
+  display: block;
+  pointer-events: none;
+}
+.hero-title em .i-dot-diamond {
+  background: var(--text2);
+}
+
+/* Brand network */
+.brand-network {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto 2.5rem;
+}
+.brand-network-inner {
+  display: grid;
+  grid-template-columns: 140px 1fr 140px;
+  align-items: center;
+  gap: 0;
+  height: 180px;
+}
+.brand-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.brand-nodes.right { align-items: flex-end; }
+.brand-node {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  color: var(--text3);
+  border: 0.5px solid var(--border);
+  border-radius: 4px;
+  padding: 5px 10px;
+  background: var(--surface);
+  transition: color 0.2s, border-color 0.2s;
+  white-space: nowrap;
+}
+.brand-node:hover { color: var(--text2); border-color: var(--border2); }
+.network-lines {
+  width: 100%;
+  height: 180px;
+}
+.network-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text3);
+  letter-spacing: 2px;
+  text-align: center;
+  margin-top: 0.75rem;
+  text-transform: uppercase;
+}
+
+/* ANIMATIONS */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; } 50% { opacity: 1; }
+}
+.fade-up { animation: fadeUp 0.8s ease forwards; opacity: 0; }
+.delay-1 { animation-delay: 0.1s; }
+.delay-2 { animation-delay: 0.2s; }
+.delay-3 { animation-delay: 0.35s; }
+.delay-4 { animation-delay: 0.5s; }
+.delay-5 { animation-delay: 0.65s; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* MOBILE */
+@media (max-width: 768px) {
+  nav { padding: 1rem 1.5rem; }
+  .nav-links, .nav-cta { display: none; }
+  section { padding: 4rem 1.5rem; }
+  .problem { grid-template-columns: 1fr; gap: 3rem; }
+  .solution-grid { grid-template-columns: 1fr; }
+  .team-grid { grid-template-columns: repeat(2, 1fr); }
+  .hero { padding: 7rem 1.5rem 3rem; }
+  .hero-stats { gap: 1.5rem; }
+  .chat-window { width: calc(100vw - 2rem); right: 1rem; }
+  footer { flex-direction: column; gap: 1.5rem; text-align: center; }
+  .footer-links { justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+<div class="cursor-ring" id="cursorRing"></div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <svg width="52" height="52" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(154,170)">
+        <polygon points="0,-52 43,0 0,52 -43,0" fill="#ffffff"/>
+        <polygon points="25,-52 68,0 25,52 -18,0" fill="#ffffff" opacity="0.4"/>
+        <polygon points="13,-52 56,0 13,52 -30,0" fill="#ffffff" opacity="0.72"/>
+      </g>
+    </svg>
+    <span class="nav-brand">globuflow</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#team">Team</a></li>
+  </ul>
+  <button class="nav-cta" onclick="scrollToWaitlist()">Join waitlist</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-tag fade-up">Supply chain OS · Coming 2026</div>
+
+  <h1 class="hero-title fade-up delay-1">
+    Flow without<br/><em>friction.</em>
+  </h1>
+
+  <!-- Brand network connecting to GlobuFlow diamond -->
+  <div class="brand-network fade-up delay-2">
+    <div class="brand-network-inner">
+      <div class="brand-nodes left">
+        <div class="brand-node">Shopify</div>
+        <div class="brand-node">Amazon</div>
+        <div class="brand-node">WooCommerce</div>
+        <div class="brand-node">eBay</div>
+      </div>
+      <svg class="network-lines" viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+        <line x1="0" y1="30" x2="150" y2="100" stroke="rgba(255,255,255,0.18)" stroke-width="0.75"/>
+        <line x1="0" y1="75" x2="150" y2="100" stroke="rgba(255,255,255,0.18)" stroke-width="0.75"/>
+        <line x1="0" y1="125" x2="150" y2="100" stroke="rgba(255,255,255,0.18)" stroke-width="0.75"/>
+        <line x1="0" y1="170" x2="150" y2="100" stroke="rgba(255,255,255,0.18)" stroke-width="0.75"/>
+        <line x1="300" y1="30" x2="150" y2="100" stroke="rgba(255,255,255,0.18)" stroke-width="0.75"/>
+        <line x1="300" y1="75" x2="150" y2="100" stroke="rgba(255,255,255,0.18)" stroke-width="0.75"/>
+        <line x1="300" y1="125" x2="150" y2="100" stroke="rgba(255,255,255,0.18)" stroke-width="0.75"/>
+        <line x1="300" y1="170" x2="150" y2="100" stroke="rgba(255,255,255,0.18)" stroke-width="0.75"/>
+        <circle cx="0" cy="30" r="2" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="0" cy="75" r="2" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="0" cy="125" r="2" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="0" cy="170" r="2" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="300" cy="30" r="2" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="300" cy="75" r="2" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="300" cy="125" r="2" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="300" cy="170" r="2" fill="rgba(255,255,255,0.3)"/>
+        <g transform="translate(150,100)">
+          <polygon points="14,-28 38,0 14,28 -10,0" fill="#ffffff" opacity="0.4"/>
+          <polygon points="7,-28 31,0 7,28 -17,0" fill="#ffffff" opacity="0.72"/>
+          <polygon points="0,-28 24,0 0,28 -24,0" fill="#ffffff" opacity="1"/>
+        </g>
+      </svg>
+      <div class="brand-nodes right">
+        <div class="brand-node">TikTok Shop</div>
+        <div class="brand-node">Etsy</div>
+        <div class="brand-node">BigCommerce</div>
+        <div class="brand-node">Alibaba</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="hero-sub fade-up delay-3">
+    The AI-powered supply chain platform built for independent ecommerce brands. Connect. Verify. Control.
+  </p>
+
+  <div class="hero-actions fade-up delay-4">
+    <button class="btn-primary" onclick="scrollToWaitlist()">Join the waitlist</button>
+    <button class="btn-secondary" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">See how it works</button>
+  </div>
+
+  <div class="hero-stats fade-up delay-5">
+    <div class="hero-stat">
+      <span class="hero-stat-num">72%</span>
+      <span class="hero-stat-label">Of SME brands have no supply chain visibility</span>
+    </div>
+    <div class="hero-stat-div"></div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">$1.1M</span>
+      <span class="hero-stat-label">Lost per stockout event on average</span>
+    </div>
+    <div class="hero-stat-div"></div>
+    <div class="hero-stat">
+      <span class="hero-stat-num">3.5x</span>
+      <span class="hero-stat-label">More supplier disputes without verification</span>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem" style="background: var(--surface); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border);">
+  <div class="problem">
+    <div>
+      <div class="section-label">The problem</div>
+      <h2 class="section-title">Your supply chain is <em>invisible.</em></h2>
+      <p class="section-sub">Independent ecommerce brands are scaling fast — but the infrastructure hasn't caught up. Fragmented, unverified, and uncontrollable.</p>
+    </div>
+    <div class="problem-cards">
+      <div class="problem-card">
+        <span class="problem-card-num">01</span>
+        <p class="problem-card-text"><strong>No visibility.</strong> Brands have no real-time view of inventory, suppliers, or warehouses. Issues surface too late.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-card-num">02</span>
+        <p class="problem-card-text"><strong>Unverified suppliers.</strong> There's no standard way to know if a supplier is legitimate before connecting with them.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-card-num">03</span>
+        <p class="problem-card-text"><strong>Total fragmentation.</strong> Manufacturers, suppliers, and warehouses operate in silos — nothing is connected.</p>
+      </div>
+      <div class="problem-card">
+        <span class="problem-card-num">04</span>
+        <p class="problem-card-text"><strong>Enterprise tools only.</strong> Existing platforms start at $2,500/month. Built for Fortune 500, not growing brands.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOLUTION -->
+<section id="solution">
+  <div style="max-width: 1100px; margin: 0 auto;">
+    <div class="section-label">The solution</div>
+    <h2 class="section-title">One platform.<br/><em>Every link in your chain.</em></h2>
+    <p class="section-sub">GlobuFlow gives independent ecommerce brands the supply chain infrastructure that was previously only available to enterprise companies.</p>
+
+    <div class="solution-grid">
+      <div class="solution-card">
+        <div class="sol-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="sol-num">01</div>
+        <div class="sol-title">Connect</div>
+        <p class="sol-desc">Verified manufacturers, suppliers, and warehouses connected into one place. End the fragmentation. See everything in one dashboard.</p>
+      </div>
+      <div class="solution-card">
+        <div class="sol-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5">
+            <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+        </div>
+        <div class="sol-num">02</div>
+        <div class="sol-title">Verify</div>
+        <p class="sol-desc">AI-powered supplier verification engine. Every supplier scored on authenticity, legitimacy, compliance, and reliability before connection.</p>
+      </div>
+      <div class="solution-card">
+        <div class="sol-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5">
+            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+          </svg>
+        </div>
+        <div class="sol-num">03</div>
+        <div class="sol-title">Control</div>
+        <p class="sol-desc">Real-time dashboard. Inventory levels, order tracking, shipment status, and automated alerts when something needs your attention.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAITLIST MID -->
+<div class="waitlist-mid" id="waitlist-mid">
+  <div class="section-label" style="justify-content: center; margin-bottom: 1.5rem;">Early access</div>
+  <h2 class="waitlist-mid-title">Be among the first<br/><em>to get access.</em></h2>
+  <p class="waitlist-mid-sub">We're onboarding our first 10 beta brands. Free access, founder input, direct line to the team.</p>
+  <div class="waitlist-form">
+    <input class="waitlist-input" type="email" placeholder="your@email.com" id="mid-email">
+    <button class="waitlist-btn" onclick="joinWaitlist('mid')">Join waitlist</button>
+  </div>
+  <p class="waitlist-note" id="mid-msg"></p>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="how-wrap">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Simple for brands.<br/><em>Powerful underneath.</em></h2>
+
+    <div class="how-steps">
+      <div class="how-step">
+        <div class="step-num">01</div>
+        <div class="step-content">
+          <div class="step-tag">Onboard</div>
+          <div class="step-title">Connect your supply chain</div>
+          <p class="step-desc">Add your existing manufacturers, suppliers, and warehouses to GlobuFlow. Import existing data or add manually. Your entire supply chain network in one place within minutes.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">02</div>
+        <div class="step-content">
+          <div class="step-tag">Verify</div>
+          <div class="step-title">AI scores every supplier</div>
+          <p class="step-desc">Our AI verification engine automatically analyses each supplier — document authenticity, business legitimacy, compliance risk, and supply chain reliability. A trust score for every partner before connection is confirmed.</p>
+        </div>
+      </div>
+      <div class="how-step">
+        <div class="step-num">03</div>
+        <div class="step-content">
+          <div class="step-tag">Manage</div>
+          <div class="step-title">Control everything from one dashboard</div>
+          <p class="step-desc">Real-time inventory levels, order status, shipment tracking, and automated alerts when something needs attention. Your entire supply chain — visible, controllable, and connected — in one place.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team" style="background: var(--surface); border-top: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border);">
+  <div class="team-wrap">
+    <div class="section-label">The team</div>
+    <h2 class="section-title">Built by founders across<br/><em>five countries.</em></h2>
+    <p class="section-sub">A distributed team with one shared mission — giving independent ecommerce brands the supply chain infrastructure they deserve.</p>
+
+    <div class="team-grid">
+      <div class="team-card">
+        <div class="team-initials">AT</div>
+        <div class="team-name">Aditya Turki</div>
+        <div class="team-role">Founder & CEO</div>
+        <div class="team-loc">Melbourne, AU</div>
+        <a href="https://www.linkedin.com/in/aditya-turki" target="_blank" class="team-linkedin">LinkedIn ↗</a>
+      </div>
+      <div class="team-card">
+        <div class="team-initials">ZC</div>
+        <div class="team-name">Zeting (Justin) Chen</div>
+        <div class="team-role">Co-Founder & COO</div>
+        <div class="team-loc">New York, US</div>
+        <a href="https://www.linkedin.com/in/zeting-chen" target="_blank" class="team-linkedin">LinkedIn ↗</a>
+      </div>
+      <div class="team-card">
+        <div class="team-initials">RS</div>
+        <div class="team-name">Rinta Seto</div>
+        <div class="team-role">Co-Founder & CAIO</div>
+        <div class="team-loc">London, UK</div>
+        <a href="https://www.linkedin.com/in/rinta-seto" target="_blank" class="team-linkedin">LinkedIn ↗</a>
+      </div>
+      <div class="team-card">
+        <div class="team-initials">NS</div>
+        <div class="team-name">Namirah Shahed</div>
+        <div class="team-role">CMO & People Lead</div>
+        <div class="team-loc">Melbourne, AU</div>
+        <a href="https://www.linkedin.com/in/namirah-shahed" target="_blank" class="team-linkedin">LinkedIn ↗</a>
+      </div>
+      <div class="team-card">
+        <div class="team-initials">CK</div>
+        <div class="team-name">Chiitreesh Kapil Dhar</div>
+        <div class="team-role">VP of Operations — India</div>
+        <div class="team-loc">Delhi, India</div>
+        <a href="https://www.linkedin.com/in/chiitreesh-kapil-dhar" target="_blank" class="team-linkedin">LinkedIn ↗</a>
+      </div>
+      <div class="team-card">
+        <div class="team-initials">JK</div>
+        <div class="team-name">Jongha (Simon) Kim</div>
+        <div class="team-role">Head of Media</div>
+        <div class="team-loc">Singapore</div>
+        <a href="https://www.linkedin.com/in/jongha-kim" target="_blank" class="team-linkedin">LinkedIn ↗</a>
+      </div>
+      <div class="team-card">
+        <div class="team-initials">KR</div>
+        <div class="team-name">Keenjal Ray</div>
+        <div class="team-role">Growth & Strategic Advisor</div>
+        <div class="team-loc">Singapore</div>
+        <a href="https://www.linkedin.com/in/keenjal-ray" target="_blank" class="team-linkedin">LinkedIn ↗</a>
+      </div>
+      <div class="team-card">
+        <div class="team-initials">RJ</div>
+        <div class="team-name">Rhodrick Juan Teja</div>
+        <div class="team-role">Growth Ops & Recruiter</div>
+        <div class="team-loc">Melbourne, AU</div>
+        <a href="https://www.linkedin.com/in/rhodrick-teja" target="_blank" class="team-linkedin">LinkedIn ↗</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WAITLIST BOTTOM -->
+<section class="waitlist-bottom" id="waitlist">
+  <div class="section-label" style="justify-content: center;">Join the waitlist</div>
+  <h2 class="section-title">Ready to fix your<br/><em>supply chain?</em></h2>
+  <p class="section-sub">We're launching in 2026. Join the waitlist and be among the first brands to get access.</p>
+  <div class="waitlist-form">
+    <input class="waitlist-input" type="email" placeholder="your@email.com" id="bottom-email">
+    <button class="waitlist-btn" onclick="joinWaitlist('bottom')">Join waitlist</button>
+  </div>
+  <p class="waitlist-note" id="bottom-msg" style="margin-top: 1rem;"></p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    <svg width="36" height="36" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(154,170)">
+        <polygon points="0,-52 43,0 0,52 -43,0" fill="#ffffff" opacity="0.5"/>
+        <polygon points="25,-52 68,0 25,52 -18,0" fill="#ffffff" opacity="0.2"/>
+        <polygon points="13,-52 56,0 13,52 -30,0" fill="#ffffff" opacity="0.35"/>
+      </g>
+    </svg>
+    globuflow
+  </div>
+  <ul class="footer-links">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#solution">Solution</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#team">Team</a></li>
+    <li><a href="#waitlist">Waitlist</a></li>
+  </ul>
+  <span class="footer-copy">© 2026 GlobuFlow. All rights reserved.</span>
+</footer>
+
+<!-- AI CHATBOT -->
+<button class="chat-btn" id="chatBtn" onclick="toggleChat()" aria-label="Open AI assistant">
+  <svg viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 2C6.48 2 2 6.03 2 11c0 2.4.93 4.6 2.45 6.25L3 21l4.26-1.42A10.1 10.1 0 0012 20c5.52 0 10-4.03 10-9S17.52 2 12 2z"/>
+    <circle cx="8" cy="11" r="1" fill="black"/>
+    <circle cx="12" cy="11" r="1" fill="black"/>
+    <circle cx="16" cy="11" r="1" fill="black"/>
+  </svg>
+</button>
+
+<div class="chat-window" id="chatWindow">
+  <div class="chat-header">
+    <div class="chat-avatar">
+      <svg width="16" height="16" viewBox="0 0 340 340" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(154,170)">
+          <polygon points="0,-52 43,0 0,52 -43,0" fill="#ffffff"/>
+          <polygon points="25,-52 68,0 25,52 -18,0" fill="#ffffff" opacity="0.4"/>
+          <polygon points="13,-52 56,0 13,52 -30,0" fill="#ffffff" opacity="0.72"/>
+        </g>
+      </svg>
+    </div>
+    <div class="chat-info">
+      <div class="chat-name">GlobuFlow AI</div>
+      <div class="chat-status">● Online</div>
+    </div>
+    <button class="chat-close" onclick="toggleChat()">×</button>
+  </div>
+
+  <div class="chat-messages" id="chatMessages">
+    <div class="msg bot">Hey 👋 I'm GlobuFlow's AI assistant. Ask me anything about what we're building, how it works, or how to join the waitlist.</div>
+  </div>
+
+  <div class="chat-suggestions" id="suggestions">
+    <button class="suggestion" onclick="askQuestion('What is GlobuFlow?')">What is GlobuFlow?</button>
+    <button class="suggestion" onclick="askQuestion('How does AI verification work?')">AI verification?</button>
+    <button class="suggestion" onclick="askQuestion('How do I join the waitlist?')">Join waitlist</button>
+    <button class="suggestion" onclick="askQuestion('What is the pricing?')">Pricing</button>
+  </div>
+
+  <div class="chat-input-row">
+    <input class="chat-input" type="text" placeholder="Ask anything..." id="chatInput" onkeydown="if(event.key==='Enter') sendChat()">
+    <button class="chat-send" onclick="sendChat()">→</button>
+  </div>
+</div>
+
+<script>
+// Cursor
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursorRing');
+let mx = 0, my = 0, rx = 0, ry = 0;
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx - 4 + 'px';
+  cursor.style.top = my - 4 + 'px';
+});
+function animRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) *.12;
+  ring.style.left = rx - 16 + 'px';
+  ring.style.top = ry - 16 + 'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+
+// Nav scroll
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
+});
+
+// Scroll to waitlist
+function scrollToWaitlist() {
+  document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Waitlist
+const waitlistEmails = new Set();
+function joinWaitlist(source) {
+  const input = document.getElementById(source === 'mid' ? 'mid-email' : 'bottom-email');
+  const msg = document.getElementById(source === 'mid' ? 'mid-msg' : 'bottom-msg');
+  const email = input.value.trim();
+  if (!email || !email.includes('@')) {
+    msg.textContent = 'Please enter a valid email.';
+    msg.style.color = '#ef4444';
+    return;
+  }
+  if (waitlistEmails.has(email)) {
+    msg.textContent = "You're already on the list.";
+    msg.style.color = '#888';
+    return;
+  }
+  waitlistEmails.add(email);
+  input.value = '';
+  msg.textContent = "You're on the list. We'll be in touch soon.";
+  msg.style.color = '#22c55e';
+  setTimeout(() => msg.textContent = '', 5000);
+}
+
+// Chat
+let chatOpen = false;
+function toggleChat() {
+  chatOpen = !chatOpen;
+  document.getElementById('chatWindow').classList.toggle('open', chatOpen);
+}
+
+const responses = {
+  'what is globuflow': "GlobuFlow is a supply chain OS for independent ecommerce brands. We connect manufacturers, suppliers, and warehouses into one AI-powered dashboard — giving brands full visibility and control over their operations. Think of us as the missing infrastructure layer between your brand and your supply chain.",
+  'how does ai verification work': "Our AI verification engine analyses every supplier before they connect to your supply chain. It scores them on four dimensions: document authenticity, business legitimacy, compliance risk, and supply chain reliability. You get a trust score for every supplier — so you know exactly who you're working with before any connection is made.",
+  'how do i join the waitlist': "Just scroll down to the waitlist section and enter your email! We're onboarding our first 10 beta brands with free access, direct founder input, and a say in how the product gets built. Or I can take your email right here — just type it in.",
+  'what is the pricing': "We're launching with three tiers: Starter at $29/month, Growth at $99/month, and Scale at $249/month. Our first 10 beta brands get free access during the beta period. We're priced well below the enterprise tools (which start at $2,500/month) because we're built for independent brands, not Fortune 500 companies.",
+  'who is the team': "GlobuFlow was founded by Aditya Turki (CEO, Melbourne), Zeting Justin Chen (COO, New York), and Rinta Seto (Chief AI Officer, UK). We have a distributed team of 8 across Australia, Singapore, India, and the UK. We're a remote-first team building global infrastructure.",
+  'when does it launch': "We're targeting a launch in November 2026. We're currently building the product and onboarding our first beta brands. Join the waitlist to be among the first to get access.",
+  'default': "That's a great question. GlobuFlow is still being built — we're in pre-launch right now. For specific questions, the best way to get in touch is to join our waitlist and we'll reach out directly. Is there anything else I can help you with?"
+};
+
+function askQuestion(q) {
+  const suggestions = document.getElementById('suggestions');
+  suggestions.style.display = 'none';
+  addMsg(q, 'user');
+  setTimeout(() => {
+    const key = Object.keys(responses).find(k => q.toLowerCase().includes(k.split(' ')[0]) || k.split(' ').some(w => q.toLowerCase().includes(w)));
+    addMsg(key ? responses[key] : responses['default'], 'bot');
+  }, 600);
+}
+
+function sendChat() {
+  const input = document.getElementById('chatInput');
+  const q = input.value.trim();
+  if (!q) return;
+  input.value = '';
+  document.getElementById('suggestions').style.display = 'none';
+  addMsg(q, 'user');
+  const typingId = 'typing-' + Date.now();
+  const msgs = document.getElementById('chatMessages');
+  const typing = document.createElement('div');
+  typing.className = 'msg bot typing';
+  typing.id = typingId;
+  typing.textContent = 'Thinking...';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+  setTimeout(() => {
+    document.getElementById(typingId)?.remove();
+    const qLower = q.toLowerCase();
+    const key = Object.keys(responses).find(k => k !== 'default' && k.split(' ').filter(w => w.length > 3).some(w => qLower.includes(w)));
+    addMsg(key ? responses[key] : responses['default'], 'bot');
+  }, 1000);
+}
+
+function addMsg(text, type) {
+  const msgs = document.getElementById('chatMessages');
+  const div = document.createElement('div');
+  div.className = 'msg ' + type;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Intersection observer for scroll animations
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.problem-card, .solution-card, .how-step, .team-card').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+  observer.observe(el);
+});
+</script>
+</body>
+</html>
