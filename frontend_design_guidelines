@@ -1,0 +1,107 @@
+{
+  "theme": "dark",
+  "archetype": "4 (Swiss & High-Contrast / Monochrome Technical)",
+  "design_philosophy": "Deliver an editorial, high-tech, monochrome aesthetic. High contrast, pure black and white, sharp edges, generous whitespace. Tension is created by pairing elegant editorial serifs with strict technical monospace elements. The diamond logo is the central focal point of the visual language.",
+  "colors": {
+    "background": "#050505",
+    "foreground": "#FFFFFF",
+    "card": "#0A0A0A",
+    "card_foreground": "#FFFFFF",
+    "border": "#222222",
+    "primary": "#FFFFFF",
+    "primary_foreground": "#000000",
+    "muted": "#1A1A1A",
+    "muted_foreground": "#888888",
+    "accent": "#FFFFFF",
+    "accent_foreground": "#000000"
+  },
+  "typography": {
+    "font_imports": "@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=JetBrains+Mono:wght@100;400;700&family=Manrope:wght@300;400;500;600&display=swap');",
+    "font_families": {
+      "serif": "['Cormorant Garamond', 'serif']",
+      "mono": "['JetBrains Mono', 'monospace']",
+      "sans": "['Manrope', 'sans-serif']"
+    },
+    "hierarchy": {
+      "h1": "font-serif text-5xl sm:text-6xl md:text-7xl font-light tracking-tighter leading-none",
+      "h2": "font-serif text-3xl sm:text-4xl md:text-5xl font-light tracking-tight",
+      "h3": "font-sans text-xl sm:text-2xl font-medium tracking-tight",
+      "h4": "font-mono text-sm uppercase tracking-[0.2em] text-muted-foreground",
+      "body": "font-sans text-base leading-relaxed text-foreground/80",
+      "label": "font-mono text-xs uppercase tracking-[0.1em]"
+    }
+  },
+  "layout": {
+    "spacing_scale": "Generous spacing. Use p-8, p-12, p-24, py-32 to create breathing room.",
+    "container": "max-w-[1400px] mx-auto px-6 md:px-12",
+    "grid_system": "Bento grids with sharp 1px borders (border-border). No rounded corners (rounded-none).",
+    "alignment": "Strictly optical. Use asymmetry. Avoid center-aligning large blocks of text; left-align for technical authority."
+  },
+  "visual_enhancers": {
+    "background_grid": "Fixed absolute background with 1px fine grid: `background-image: linear-gradient(to right, rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px;`",
+    "noise_overlay": "Add an SVG noise or grain overlay (opacity-20 mix-blend-overlay pointer-events-none fixed inset-0).",
+    "custom_cursor": "Minimalist white dot cursor that follows the mouse (mix-blend-difference).",
+    "surfaces": "Grid Borders (The Technical Look). border-collapse style layouts with sharp 1px borders. Hover states should invert colors (bg-white text-black) or add subtle white glows.",
+    "animations": "Lenis for smooth scroll. Framer Motion for scroll-triggered fades, parallax, and the central map node pulsing."
+  },
+  "components": {
+    "buttons": "Sharp edges (rounded-none), high contrast (bg-white text-black), mono typography for labels. Hover: subtle scale and text color inversion if inverted.",
+    "inputs": "Shadcn inputs heavily customized: rounded-none, border-b only (border-border), bg-transparent, focus:border-white focus:ring-0. Mono placeholder text.",
+    "cards": "Flat background, 1px solid border (#222222), no shadow. Hover: border-white transition-colors duration-300."
+  },
+  "media": {
+    "images": {
+      "team_members": [
+        "https://images.unsplash.com/photo-1558730234-d8b2281b0d00?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdHxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3ODEzNTk2Mzl8MA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1542190891-2093d38760f2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHw0fHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdHxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3ODEzNTk2Mzl8MA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/photo-1506863530036-1efeddceb993?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdHxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3ODEzNTk2Mzl8MA&ixlib=rb-4.1.0&q=85",
+        "https://images.unsplash.com/flagged/photo-1595514191830-3e96a518989b?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODR8MHwxfHNlYXJjaHwyfHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdHxlbnwwfHx8YmxhY2tfYW5kX3doaXRlfDE3ODEzNTk2Mzl8MA&ixlib=rb-4.1.0&q=85",
+        "https://images.pexels.com/photos/12396627/pexels-photo-12396627.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "https://images.pexels.com/photos/27086922/pexels-photo-27086922.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+      ]
+    },
+    "map": "Use a custom SVG map or react-simple-maps, set fill to transparent, strokes to #333, with animated framer-motion SVG paths (nodes) leading to a central <polygon points='10,0 20,10 10,20 0,10'/> representing the diamond logo."
+  },
+  "sections": {
+    "hero": {
+      "layout": "Min-h-screen relative flex flex-col justify-center overflow-hidden",
+      "content": "H1 'Flow without friction' in huge serif text. Subtext in mono or sans explaining the B2B SaaS value proposition. Waitlist email input (raw HTML/Tailwind form) below.",
+      "visuals": "Animated world map positioned behind or beside the text as an immersive background, connecting nodes to the central diamond logo."
+    },
+    "problem": {
+      "layout": "Grid cols-1 md:grid-cols-2 lg:grid-cols-4 border-collapse",
+      "content": "4 pain point cards. High contrast. Numbered '01', '02' in Mono font. Minimal icons."
+    },
+    "solution": {
+      "layout": "Sticky horizontal scroll or stacked vertical sections with massive typography.",
+      "content": "Trio: Connect / Verify / Control. Display as large sections with abstract visual nodes or sharp borders."
+    },
+    "how_it_works": {
+      "layout": "Two-column. Left: Sticky header 'How it works'. Right: 3 steps scrolling vertically with an animated progress line.",
+      "content": "Detailed steps with mono overlines."
+    },
+    "team": {
+      "layout": "Grid cols-2 md:grid-cols-4 gap-0",
+      "content": "8 team members using the provided b&w images. Hover effect reveals their name and title."
+    },
+    "careers": {
+      "layout": "List layout. Border-b for each item.",
+      "content": "4 open roles. Flex container with role name, location, and an arrow icon. Hover: bg-white text-black."
+    },
+    "footer": {
+      "layout": "py-32 flex flex-col items-center border-t border-border",
+      "content": "Bottom waitlist CTA, followed by massive 'GlobuFlow' text (text-[10vw] font-serif)."
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install required dependencies: `yarn add framer-motion react-simple-maps iconoir-react lucide-react clsx tailwind-merge`",
+    "Update tailwind.config.js to include the exact colors, fonts, and grid utilities.",
+    "Implement the 1px grid background and a noise overlay as absolute fixed layers.",
+    "Build a custom cursor component that tracks mouse position and uses mix-blend-difference.",
+    "For the animated world map, use react-simple-maps (with Geographies/Geography) or a raw SVG dotted map, with animated lines (framer-motion pathLength) connecting dots to the center diamond logo.",
+    "Ensure all interactive elements have data-testid attributes.",
+    "Ensure sharp corners (rounded-none) globally.",
+    "Avoid Shadcn Cards if they come with rounded corners and shadows; use raw divs with border-border instead for the raw bento aesthetic.",
+    "Do not use generic fonts like Inter or Roboto. Strictly stick to Cormorant Garamond, Manrope, and JetBrains Mono."
+  ]
+}
